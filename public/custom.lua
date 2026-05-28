@@ -379,5 +379,4 @@ local function toggleAimbot(state)
         if aimbotConnection then aimbotConnection:Disconnect() aimbotConnection = nil end
     end
 end
--- Hook into existing job system (search for "setJobActive" and add this nearby if needed)
 init()
