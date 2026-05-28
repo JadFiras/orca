@@ -207,6 +207,45 @@ end
 
 -- Runtime
 
+-- ==================== CUSTOM AIMBOT ====================
+getgenv().OrcaAimbot = { Enabled = false, FOV = 120, Smoothness = 0.4, TeamCheck = true }
+local aimbotConnection
+local function getClosestTarget()
+    local lp = game.Players.LocalPlayer
+    local camera = workspace.CurrentCamera
+    local closest, shortest = nil, math.huge
+    for _, plr in ipairs(game.Players:GetPlayers()) do
+        if plr == lp or not plr.Character then continue end
+        if getgenv().OrcaAimbot.TeamCheck and plr.Team == lp.Team then continue end
+        local head = plr.Character:FindFirstChild("Head")
+        if not head then continue end
+        local vector, onScreen = camera:WorldToViewportPoint(head.Position)
+        if not onScreen then continue end
+        local dist = (Vector2.new(vector.X, vector.Y) - camera.ViewportSize/2).Magnitude
+        if dist < getgenv().OrcaAimbot.FOV and dist < shortest then
+            shortest = dist
+            closest = plr
+        end
+    end
+    return closest
+end
+local function toggleAimbot(state)
+    getgenv().OrcaAimbot.Enabled = state
+    if state then
+        aimbotConnection = game:GetService("RunService").RenderStepped:Connect(function()
+            if not getgenv().OrcaAimbot.Enabled then return end
+            local target = getClosestTarget()
+            if not target or not target.Character then return end
+            local camera = workspace.CurrentCamera
+            local headPos = target.Character.Head.Position
+            local targetCFrame = CFrame.lookAt(camera.CFrame.Position, headPos)
+            camera.CFrame = camera.CFrame:Lerp(targetCFrame, getgenv().OrcaAimbot.Smoothness)
+        end)
+    else
+        if aimbotConnection then aimbotConnection:Disconnect() aimbotConnection = nil end
+    end
+end
+
 local function init()
 	if not game:IsLoaded() then
 		game.Loaded:Wait()
